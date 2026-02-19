@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  chain-a:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    command: sh -c "npm install && npx hardhat node --network chainA --port 8545"
+    ports:
+      - "8545:8545"
+    networks:
+      - bridge-net
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8545"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  chain-b:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    command: sh -c "npm install && npx hardhat node --network chainB --port 9545"
+    ports:
+      - "9545:9545"
+    networks:
+      - bridge-net
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9545"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  deployer:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - deployments:/deployments
+    depends_on:
+      chain-a:
+        condition: service_healthy
+      chain-b:
+        condition: service_healthy
+    command: >
+      sh -c "
+      npm install &&
+      npx hardhat run scripts/deploy_chain_a.js --network chainA &&
+      npx hardhat run scripts/deploy_chain_b.js --network chainB &&
+      cp relayer/deployments_chain_*.json /deployments/
+      "
+    networks:
+      - bridge-net
+    environment:
+      - CHAIN_A_RPC_URL=http://chain-a:8545
+      - CHAIN_B_RPC_URL=http://chain-b:9545
+      - DEPLOYER_PRIVATE_KEY=${DEPLOYER_PRIVATE_KEY}
+
+  relayer:
+    build: ./relayer
+    restart: on-failure
+    depends_on:
+      deployer:
+        condition: service_completed_successfully
+      chain-a:
+        condition: service_healthy
+      chain-b:
+        condition: service_healthy
+    networks:
+      - bridge-net
+    volumes:
+      - ./relayer_data:/app/data
+      - deployments:/app/deployments
+    environment:
+      - CHAIN_A_RPC_URL=http://chain-a:8545
+      - CHAIN_B_RPC_URL=http://chain-b:9545
+      - DEPLOYER_PRIVATE_KEY=${DEPLOYER_PRIVATE_KEY}
+      - DB_PATH=/app/data/processed_nonces.db
+      - DEPLOYMENTS_DIR=/app/deployments
+      - CONFIRMATION_DEPTH=3
+
+networks:
+  bridge-net:
+
+volumes:
+  relayer_data:
+  deployments:

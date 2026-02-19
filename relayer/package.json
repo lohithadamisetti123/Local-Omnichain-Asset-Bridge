@@ -1,0 +1,14 @@
+{
+  "name": "bridge-relayer",
+  "version": "1.0.0",
+  "description": "Relayer service for Local Omnichain Asset Bridge",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.11.1",
+    "sqlite3": "^5.1.7"
+  }
+}
