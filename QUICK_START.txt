@@ -1,0 +1,161 @@
+════════════════════════════════════════════════════════════════════════════════
+                        QUICK START GUIDE - STEP BY STEP
+════════════════════════════════════════════════════════════════════════════════
+
+⚠️  IMPORTANT: Open 3-4 separate PowerShell/Terminal windows for each step below!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: Start Chain A (Settlement Chain) - Port 8545
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Terminal/PowerShell Window #1 and run:
+
+  cd c:\Users\RAGHU\ VEER\Local-Omnichain-Asset-Bridge
+  node run-chain.js 8545 "Chain A"
+
+Expected output:
+  🚀 Starting Chain A on port 8545...
+  
+  Started HTTP and WebSocket JSON-RPC server at http://0.0.0.0:8545/
+  
+  Accounts
+  ========
+  Account #0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (10000 ETH)
+  ...
+  
+✅ Chain A is now running. Leave this window open.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: Start Chain B (Execution Chain) - Port 9545
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Terminal/PowerShell Window #2 and run:
+
+  cd c:\Users\RAGHU\ VEER\Local-Omnichain-Asset-Bridge
+  node run-chain.js 9545 "Chain B"
+
+Expected output:
+  🚀 Starting Chain B on port 9545...
+  
+  Started HTTP and WebSocket JSON-RPC server at http://0.0.0.0:9545/
+  ...
+
+✅ Chain B is now running. Leave this window open.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: Deploy Contracts to Chain A
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Terminal/PowerShell Window #3 and run:
+
+  cd c:\Users\RAGHU\ VEER\Local-Omnichain-Asset-Bridge
+  npx hardhat run scripts/deploy_chain_a.js --network chainA
+
+Expected output:
+  ✓ VaultToken deployed
+  ✓ BridgeLock deployed
+  ✓ GovernanceEmergency deployed
+  ✓ All roles granted successfully
+  ✓ Deployment info saved
+
+✅ Contracts deployed to Chain A
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: Deploy Contracts to Chain B
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the same Window #3, run:
+
+  npx hardhat run scripts/deploy_chain_b.js --network chainB
+
+Expected output:
+  ✓ WrappedVaultToken deployed
+  ✓ BridgeMint deployed
+  ✓ GovernanceVoting deployed
+  ✓ All roles granted successfully
+  ✓ Deployment info saved
+
+✅ Contracts deployed to Chain B
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5: Start the Relayer Service
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Terminal/PowerShell Window #4 and run:
+
+  cd c:\Users\RAGHU\ VEER\Local-Omnichain-Asset-Bridge\relayer
+  node index.js
+
+Expected output:
+  Starting Relayer Service...
+  ✓ Connected to both chains
+  ✓ Recovered past events
+  ✓ Ready to process events
+  
+  Listening for Locked events on Chain A...
+  Listening for Burned events on Chain B...
+  Listening for ProposalPassed events on Chain B...
+
+✅ Relayer is running and monitoring both chains
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 6: Run Tests (Optional - in a new window)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Terminal/PowerShell Window #5 and run:
+
+  cd c:\Users\RAGHU\ VEER\Local-Omnichain-Asset-Bridge
+  npm test              # Run all tests
+  npm run test:unit     # Or just unit tests
+  npm run test:integration  # Or integration tests
+
+
+════════════════════════════════════════════════════════════════════════════════
+                              ALL SET! 🎉
+════════════════════════════════════════════════════════════════════════════════
+
+Your system is now running with:
+
+✅ Chain A on http://127.0.0.1:8545 (ChainID: 1111)
+✅ Chain B on http://127.0.0.1:9545 (ChainID: 2222)
+✅ Contracts deployed on both chains
+✅ Relayer syncing events between chains
+
+The relayer will:
+  • Monitor both blockchains in real-time
+  • Process lock → mint flows (Lock on Chain A → Mint on Chain B)
+  • Process burn → unlock flows (Burn on Chain B → Unlock on Chain A)
+  • Handle cross-chain governance actions
+  • Automatically recover from crashes
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          TROUBLESHOOTING
+════════════════════════════════════════════════════════════════════════════════
+
+ERROR: "Port already in use"
+FIX: Kill existing Node processes
+  Get-Process node | Stop-Process -Force
+
+ERROR: "Hardhat was set to use chain id 1111, but connected to a chain with id 31337"
+FIX: Make sure both Hardhat nodes are running on ports 8545 and 9545 BEFORE deploying
+
+ERROR: "Cannot find module 'sqlite3'"
+FIX: Install relayer dependencies
+  cd relayer && npm install sqlite3 ethers dotenv && cd ..
+
+ERROR: "ECONNREFUSED" in relayer
+FIX: Verify both chains are running on correct ports
+  curl http://127.0.0.1:8545 -X POST -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+For more detailed info, see: SETUP_COMPLETE.md or README.md
