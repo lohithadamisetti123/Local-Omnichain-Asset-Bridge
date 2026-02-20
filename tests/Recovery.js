@@ -213,17 +213,4 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
         });
     });
 });
-        "function balanceOf(address account) view returns (uint256)"
-    ], walletB);
 
-    const balance = await wrappedToken.balanceOf(walletB.address);
-    // console.log("Current Wrapped Balance:", ethers.formatEther(balance));
-
-    if (balance > 0) {
-        console.log("Recovery Successful: Tokens minted after restart.");
-    } else {
-        throw new Error("Recovery Failed: No tokens minted.");
-    }
-}
-
-main().catch(console.error);

@@ -4,6 +4,9 @@ require("dotenv").config();
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.20",
+  paths: {
+    tests: "./tests"
+  },
   networks: {
     hardhat: {
       chainId: process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 31337,

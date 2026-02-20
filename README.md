@@ -17,7 +17,7 @@ This project demonstrates:
 ### Prerequisites
 
 - **Node.js** v18+ (with npm)
-- **Docker** and **Docker Compose**
+- **Docker** and **Docker Compose** (for Option 1 only)
 - **Git**
 
 ### Option 1: Docker Compose (Recommended)
@@ -34,26 +34,54 @@ cp .env.example .env
 docker-compose up --build
 ```
 
-### Option 2: Manual Setup
+### Option 2: Manual Setup (Recommended for Development)
 
+**Terminal 1: Start both blockchain nodes**
 ```bash
-# Install dependencies
 npm install
+node start-chains.js
+```
+This starts:
+- Chain A on `http://127.0.0.1:8545` (ChainID: 1111)
+- Chain B on `http://127.0.0.1:9545` (ChainID: 2222)
+
+**Terminal 2: Deploy contracts**
+```bash
+# Install relayer dependencies
 cd relayer && npm install && cd ..
 
-# Terminal 1: Chain A (port 8545)
-npx hardhat node --port 8545
-
-# Terminal 2: Chain B (port 9545)
-npx hardhat node --port 9545
-
-# Terminal 3: Deploy contracts
+# Deploy to Chain A
 npx hardhat run scripts/deploy_chain_a.js --network chainA
-npx hardhat run scripts/deploy_chain_b.js --network chainB
 
-# Terminal 4: Start relayer
+# Deploy to Chain B
+npx hardhat run scripts/deploy_chain_b.js --network chainB
+```
+
+**Terminal 3: Start the relayer service**
+```bash
 cd relayer
 node index.js
+```
+
+The relayer will:
+- Connect to both blockchains
+- Recover any missed events from history
+- Process lock → mint flows
+- Process burn → unlock flows
+- Handle governance actions
+
+### Quick Verification
+
+```bash
+# Run tests
+npm test
+```
+
+Expected output:
+```
+✓ All unit tests pass
+✓ All integration tests pass
+✓ All recovery tests pass
 ```
 
 ## Testing
@@ -123,8 +151,52 @@ DB_PATH=./relayer_data/processed_nonces.db
 ├── tests/               # Test suites
 ├── docker-compose.yml   # Orchestration
 ├── hardhat.config.js    # Hardhat config
-└── package.json         # Dependencies
+├── start-chains.js      # Helper to start both nodes
+├── package.json         # Dependencies
+└── .env                 # Configuration
 ```
+
+## Troubleshooting
+
+### Port Already in Use
+
+If you see "Port 8545/9545 already in use" errors:
+
+**On Windows (PowerShell):**
+```powershell
+Get-Process node | Stop-Process -Force
+# or for specific ports:
+Get-NetTCPConnection -LocalPort 8545 | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+```
+
+**On Mac/Linux:**
+```bash
+lsof -ti:8545,9545 | xargs kill -9
+# or
+pkill -f "hardhat node"
+```
+
+### Relayer Connection Errors
+
+If relayer fails to connect:
+1. Verify both chains are running: `curl http://127.0.0.1:8545 -X POST -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'`
+2. Verify deployment files exist: `relayer/deployments_chain_a.json` and `relayer/deployments_chain_b.json`
+3. Check `.env` file has correct RPC URLs
+4. Ensure relayer database directory exists: `mkdir -p relayer/data`
+
+### Compilation Errors
+
+If you get "Invalid contract specified in override list" errors during compilation:
+- This has been fixed in the latest code
+- Run `npm install` to ensure dependencies are updated
+- Try `npx hardhat clean` then rebuild: `npx hardhat compile`
+
+### Database Lock Issues
+
+If you see "database is locked" from SQLite:
+- Only one relayer instance can run at a time
+- Delete the database and restart: `rm relayer/data/processed_nonces.db`
+- The relayer will recover all events on startup
 
 ## Security Patterns
 
