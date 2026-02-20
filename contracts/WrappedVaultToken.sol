@@ -23,7 +23,7 @@ contract WrappedVaultToken is ERC20, AccessControl {
     function supportsInterface(bytes4 interfaceId) 
         public 
         view 
-        override(ERC20, AccessControl) 
+        override(AccessControl) 
         returns (bool) 
     {
         return super.supportsInterface(interfaceId);
