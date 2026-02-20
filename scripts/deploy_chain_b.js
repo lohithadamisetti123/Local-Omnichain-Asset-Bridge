@@ -31,10 +31,15 @@ async function main() {
     const MINTER_ROLE = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("MINTER_ROLE"));
     const RELAYER_ROLE = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("RELAYER_ROLE"));
 
+    // Grant MINTER_ROLE to BridgeMint contract
     await wrappedToken.grantRole(MINTER_ROLE, bridgeMintAddress);
+    console.log("Granted MINTER_ROLE to BridgeMint on WrappedVaultToken");
 
+    // Grant RELAYER_ROLE to deployer (for testing and relayer)
     await bridgeMint.grantRole(RELAYER_ROLE, deployer.address);
-    console.log("Roles granted.");
+    console.log("Granted RELAYER_ROLE to deployer on BridgeMint");
+
+    console.log("All roles granted successfully.");
 
     // 5. Save Deployment Info
     const deploymentInfo = {
@@ -49,7 +54,9 @@ async function main() {
     console.log("Deployment info saved to:", deploymentPath);
 }
 
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
+main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error(error);
+        process.exitCode = 1;
+    });

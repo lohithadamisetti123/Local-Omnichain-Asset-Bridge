@@ -30,11 +30,19 @@ async function main() {
     // 4. Setup Roles
     const RELAYER_ROLE = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("RELAYER_ROLE"));
 
+    // Grant relayer role to deployer (for testing)
     await bridgeLock.grantRole(RELAYER_ROLE, deployer.address);
-    await governanceEmergency.grantRole(RELAYER_ROLE, deployer.address);
+    console.log("Granted RELAYER_ROLE to deployer on BridgeLock");
 
+    // Grant relayer role to governanceEmergency contract
+    await governanceEmergency.grantRole(RELAYER_ROLE, deployer.address);
+    console.log("Granted RELAYER_ROLE to deployer on GovernanceEmergency");
+
+    // Grant relayer role for emergency actions
     await bridgeLock.grantRole(RELAYER_ROLE, governanceEmergencyAddress);
-    console.log("Roles granted.");
+    console.log("Granted RELAYER_ROLE to GovernanceEmergency contract on BridgeLock");
+
+    console.log("All roles granted successfully.");
 
     // 5. Save Deployment Info
     const deploymentInfo = {
@@ -48,6 +56,13 @@ async function main() {
     fs.writeFileSync(deploymentPath, JSON.stringify(deploymentInfo, null, 2));
     console.log("Deployment info saved to:", deploymentPath);
 }
+
+main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error(error);
+        process.exitCode = 1;
+    });
 
 main().catch((error) => {
     console.error(error);
