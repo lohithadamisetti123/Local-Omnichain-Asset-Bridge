@@ -1,16 +1,31 @@
 {
   "name": "local-omnichain-asset-bridge",
   "version": "1.0.0",
-  "description": "",
+  "description": "Two-chain asset bridge with Node.js relayer and cross-chain governance",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test",
+    "test:unit": "hardhat test tests/UnitTests.js",
+    "test:integration": "hardhat test tests/Integration.js",
+    "test:recovery": "hardhat test tests/Recovery.js",
+    "test:all": "hardhat test tests/",
+    "deploy:chainA": "hardhat run scripts/deploy_chain_a.js --network chainA",
+    "deploy:chainB": "hardhat run scripts/deploy_chain_b.js --network chainB",
+    "node:chainA": "hardhat node --port 8545",
+    "node:chainB": "hardhat node --port 9545"
   },
-  "keywords": [],
+  "keywords": [
+    "blockchain",
+    "bridge",
+    "cross-chain",
+    "relayer",
+    "governance"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "chai": "^4.3.7",
     "dotenv": "^17.3.1",
     "ethers": "^6.16.0",
     "hardhat": "^2.28.6"
