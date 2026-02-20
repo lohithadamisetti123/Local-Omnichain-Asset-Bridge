@@ -7,15 +7,17 @@ services:
     volumes:
       - ./:/app
       - /app/node_modules
-    command: sh -c "npm install && npx hardhat node --network chainA --port 8545"
+    environment:
+      - CHAIN_ID=1111
+    command: sh -c "npm install && npx hardhat node --port 8545"
     ports:
       - "8545:8545"
     networks:
       - bridge-net
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "8545"]
-      interval: 5s
-      timeout: 10s
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8545"]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   chain-b:
@@ -24,15 +26,17 @@ services:
     volumes:
       - ./:/app
       - /app/node_modules
-    command: sh -c "npm install && npx hardhat node --network chainB --port 9545"
+    environment:
+      - CHAIN_ID=2222
+    command: sh -c "npm install && npx hardhat node --port 9545"
     ports:
       - "9545:9545"
     networks:
       - bridge-net
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9545"]
-      interval: 5s
-      timeout: 10s
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9545"]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   deployer:
