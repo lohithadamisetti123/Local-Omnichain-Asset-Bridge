@@ -11,6 +11,7 @@ contract BridgeMint is AccessControl {
     uint256 public currentNonce;
 
     event Burned(address indexed user, uint256 amount, uint256 nonce);
+    event MintWrappedCalled(address indexed user, uint256 amount, uint256 nonce);
 
     constructor(address _wrappedToken) {
         wrappedToken = WrappedVaultToken(_wrappedToken);
@@ -21,11 +22,14 @@ contract BridgeMint is AccessControl {
         require(!processedNonces[nonce], "Nonce already processed");
         processedNonces[nonce] = true;
         wrappedToken.mint(user, amount);
+        emit MintWrappedCalled(user, amount, nonce);
     }
 
     function burn(uint256 amount) external {
-        wrappedToken.transferFrom(msg.sender, address(this), amount);
-        wrappedToken.burn(amount);
+        require(amount > 0, "Amount must be greater than 0");
+        require(wrappedToken.balanceOf(msg.sender) >= amount, "Insufficient balance");
+        
+        wrappedToken.burn(msg.sender, amount);
         
         uint256 nonce = currentNonce++;
         emit Burned(msg.sender, amount, nonce);

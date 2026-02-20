@@ -15,7 +15,17 @@ contract WrappedVaultToken is ERC20, AccessControl {
         _mint(to, amount);
     }
 
-    function burn(uint256 amount) external {
-        _burn(msg.sender, amount);
+    function burn(address account, uint256 amount) external onlyRole(MINTER_ROLE) {
+        _burn(account, amount);
+    }
+
+    // Override supportsInterface for ERC165 compatibility
+    function supportsInterface(bytes4 interfaceId) 
+        public 
+        view 
+        override(ERC20, AccessControl) 
+        returns (bool) 
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
