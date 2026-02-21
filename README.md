@@ -77,12 +77,27 @@ The relayer will:
 npm test
 ```
 
-Expected output:
-```
-✓ All unit tests pass
-✓ All integration tests pass
-✓ All recovery tests pass
-```
+## Screenshots & Verification
+
+### 1. Relayer Service
+The relayer identifies missed events on startup and begins listening for new cross-chain activity.
+![Relayer Service](screenshots/relayer_logs.png)
+
+### 2. System Readiness
+Our verification script ensures all nodes, contracts, and deployments are healthy.
+![System Verification](screenshots/system_verification.png)
+
+### 3. Comprehensive Test Results
+All 44 tests (Unit, Integration, and Recovery) pass successfully.
+![Unit Tests](screenshots/unit_tests.png)
+
+### 4. Integration Flows
+Verification of end-to-end Lock-Mint and Burn-Unlock cycles.
+![Integration Tests](screenshots/integration_tests.png)
+
+### 5. Recovery Scenarios
+Verification of relayer idempotency and crash recovery logic.
+![Recovery Tests](screenshots/recovery_tests.png)
 
 ## Testing
 
