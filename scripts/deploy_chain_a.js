@@ -29,6 +29,7 @@ async function main() {
 
     // 4. Setup Roles
     const RELAYER_ROLE = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("RELAYER_ROLE"));
+    const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
     // Grant relayer role to deployer (for testing)
     await bridgeLock.grantRole(RELAYER_ROLE, deployer.address);
@@ -41,6 +42,10 @@ async function main() {
     // Grant relayer role for emergency actions
     await bridgeLock.grantRole(RELAYER_ROLE, governanceEmergencyAddress);
     console.log("Granted RELAYER_ROLE to GovernanceEmergency contract on BridgeLock");
+
+    // Grant admin role to GovernanceEmergency so it can call pause/unpause
+    await bridgeLock.grantRole(DEFAULT_ADMIN_ROLE, governanceEmergencyAddress);
+    console.log("Granted DEFAULT_ADMIN_ROLE to GovernanceEmergency contract on BridgeLock");
 
     console.log("All roles granted successfully.");
 
@@ -63,8 +68,3 @@ main()
         console.error(error);
         process.exitCode = 1;
     });
-
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});

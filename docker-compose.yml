@@ -1,50 +1,44 @@
-version: '3.8'
 
 services:
   chain-a:
-    image: node:18-alpine
-    working_dir: /app
-    volumes:
-      - ./:/app
-      - /app/node_modules
+    build:
+      context: .
+      dockerfile: Dockerfile.node
     environment:
       - CHAIN_ID=1111
-    command: sh -c "npm install && npx hardhat node --port 8545"
+    command: npx hardhat node --port 8545
     ports:
       - "8545:8545"
     networks:
       - bridge-net
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8545"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "curl -s http://localhost:8545 > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   chain-b:
-    image: node:18-alpine
-    working_dir: /app
-    volumes:
-      - ./:/app
-      - /app/node_modules
+    build:
+      context: .
+      dockerfile: Dockerfile.node
     environment:
       - CHAIN_ID=2222
-    command: sh -c "npm install && npx hardhat node --port 9545"
+    command: npx hardhat node --port 9545
     ports:
       - "9545:9545"
     networks:
       - bridge-net
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9545"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "curl -s http://localhost:9545 > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   deployer:
-    image: node:18-alpine
-    working_dir: /app
+    build:
+      context: .
+      dockerfile: Dockerfile.node
     volumes:
-      - ./:/app
-      - /app/node_modules
       - deployments:/deployments
     depends_on:
       chain-a:
@@ -53,7 +47,6 @@ services:
         condition: service_healthy
     command: >
       sh -c "
-      npm install &&
       npx hardhat run scripts/deploy_chain_a.js --network chainA &&
       npx hardhat run scripts/deploy_chain_b.js --network chainB &&
       cp relayer/deployments_chain_*.json /deployments/

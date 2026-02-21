@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+relayer/node_modules
+relayer_data
+data
+.env
+.git
+.gitignore

@@ -1,7 +1,7 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const { ethers } = require('ethers');
 const fs = require('fs');
-const path = require('path');
 const Database = require('./database');
 
 const DB_PATH = process.env.DB_PATH || './data/processed_nonces.db';
@@ -121,7 +121,7 @@ class Relayer {
             }
         }
 
-        if (retriesA >= maxRetries || retriesB >= maxRetries) {
+        if (retriesA > maxRetries || retriesB > maxRetries) {
             throw new Error("Chains not ready after max retries");
         }
     }

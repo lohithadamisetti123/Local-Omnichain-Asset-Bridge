@@ -1,0 +1,8 @@
+FROM node:20-alpine
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+# Entrypoint is not strictly needed as we override in docker-compose, but good practice
+CMD ["npx", "hardhat", "node"]

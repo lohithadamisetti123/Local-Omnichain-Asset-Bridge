@@ -10,9 +10,9 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
 
     before(async function () {
         console.log("\n=== Recovery Test Setup ===");
-        
+
         [deployerA, relayerA, user1] = await hre.ethers.getSigners();
-        
+
         // Deploy Chain A contracts
         const VaultToken = await hre.ethers.getContractFactory("VaultToken");
         vaultToken = await VaultToken.deploy();
@@ -48,12 +48,12 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
         it("Should process lock event that occurred while relayer was down", async function () {
             // Simulate: Relayer is down, user locks tokens
             const lockAmount = hre.ethers.parseEther("100");
-            
+
             // User locks
             await vaultToken.transfer(user1.address, lockAmount);
             await vaultToken.connect(user1).approve(await bridgeLock.getAddress(), lockAmount);
             const lockTx = await bridgeLock.connect(user1).lock(lockAmount);
-            
+
             const lockReceipt = await lockTx.wait();
             console.log("✓ Lock event emitted (nonce 0)");
 
@@ -65,7 +65,7 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
 
             const nonce = 0;
             await bridgeMint.connect(relayerA).mintWrapped(user1.address, lockAmount, nonce);
-            
+
             const wrappedBalance = await wrappedToken.balanceOf(user1.address);
             expect(wrappedBalance).to.equal(lockAmount);
             console.log("✓ Relayer recovered and processed historic lock");
@@ -77,19 +77,19 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
 
             // First call succeeds (already done in previous test)
             // Second call should fail with "Nonce already processed"
-            
+
             await expect(
                 bridgeMint.connect(relayerA).mintWrapped(user1.address, amount, nonce)
             ).to.be.revertedWith("Nonce already processed");
-            
+
             console.log("✓ Idempotency confirmed: replay prevention works");
         });
     });
 
     describe("Scenario 2: Multiple Missed Events", function () {
         it("Should process multiple lock events that occurred during downtime", async function () {
-            const [, relayer, user2, user3] = await hre.ethers.getSigners();
-            
+            const [, relayer, , user2, user3] = await hre.ethers.getSigners();
+
             // Simulate: Relayer is down
             // User 2 locks
             const amount2 = hre.ethers.parseEther("50");
@@ -109,11 +109,16 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
             // Grant relayer role for this test
             await bridgeMint.grantRole(await bridgeMint.RELAYER_ROLE(), relayer.address);
 
-            await bridgeMint.connect(relayer).mintWrapped(user2.address, amount2, 1);
-            await bridgeMint.connect(relayer).mintWrapped(user3.address, amount3, 2);
-            
-            expect(await wrappedToken.balanceOf(user2.address)).to.equal(amount2);
-            expect(await wrappedToken.balanceOf(user3.address)).to.equal(amount3);
+            const allSigners = await hre.ethers.getSigners();
+            const relayerLocal = allSigners[1];
+            const u2 = allSigners[3];
+            const u3 = allSigners[4];
+
+            await bridgeMint.connect(relayerLocal).mintWrapped(u2.address, amount2, 1);
+            await bridgeMint.connect(relayerLocal).mintWrapped(u3.address, amount3, 2);
+
+            expect(await wrappedToken.balanceOf(u2.address)).to.equal(amount2);
+            expect(await wrappedToken.balanceOf(u3.address)).to.equal(amount3);
             console.log("✓ Relayer recovered and processed all missed events");
         });
     });
@@ -121,18 +126,20 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
     describe("Scenario 3: State Persistence Verification", function () {
         it("Should have processed nonces stored in persistent state", async function () {
             const nonce = 0;
-            
+
             // Check that nonce 0 cannot be replayed (it should be in the database)
             await expect(
                 bridgeMint.connect(relayerA).mintWrapped(user1.address, hre.ethers.parseEther("1"), nonce)
             ).to.be.revertedWith("Nonce already processed");
-            
+
             console.log("✓ Processed nonces are persistent in DB");
         });
 
         it("Should be able to process new events after recovery", async function () {
-            const [, relayer, user4] = await hre.ethers.getSigners();
-            
+            const allSigners = await hre.ethers.getSigners();
+            const relayer = allSigners[1];
+            const user4 = allSigners[5];
+
             // New lock
             const newAmount = hre.ethers.parseEther("25");
             await vaultToken.transfer(user4.address, newAmount);
@@ -143,7 +150,7 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
             // Process new event
             await bridgeMint.grantRole(await bridgeMint.RELAYER_ROLE(), relayer.address);
             await bridgeMint.connect(relayer).mintWrapped(user4.address, newAmount, 3);
-            
+
             expect(await wrappedToken.balanceOf(user4.address)).to.equal(newAmount);
             console.log("✓ Relayer processes new events correctly after recovery");
         });
@@ -151,15 +158,17 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
 
     describe("Scenario 4: Partial Transaction Handling", function () {
         it("Should handle case where relayer crashes after lock but before mint", async function () {
-            const [, relayer, user5] = await hre.ethers.getSigners();
-            
+            const allSigners = await hre.ethers.getSigners();
+            const relayer = allSigners[1];
+            const user5 = allSigners[6];
+
             // User locks
             const amount = hre.ethers.parseEther("30");
             await vaultToken.transfer(user5.address, amount);
             await vaultToken.connect(user5).approve(await bridgeLock.getAddress(), amount);
             const lockTx = await bridgeLock.connect(user5).lock(amount);
             await lockTx.wait();
-            
+
             // Simulate: Relayer crashes here (before calling mintWrapped)
             // No mint happens yet
             expect(await wrappedToken.balanceOf(user5.address)).to.equal(0);
@@ -167,11 +176,11 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
 
             // Simulate: Relayer recovers
             await bridgeMint.grantRole(await bridgeMint.RELAYER_ROLE(), relayer.address);
-            
+
             // Relayer scans history and finds the missed lock
             const nonce = 4;
             await bridgeMint.connect(relayer).mintWrapped(user5.address, amount, nonce);
-            
+
             // Now user should have wrapped tokens
             expect(await wrappedToken.balanceOf(user5.address)).to.equal(amount);
             console.log("✓ Relayer recovered and completed the partially executed flow");
@@ -180,22 +189,24 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
 
     describe("Scenario 5: Confirmed Blocks After Recovery", function () {
         it("Should only process events that have reached confirmation depth", async function () {
-            const [, relayer, user6] = await hre.ethers.getSigners();
-            
+            const allSigners = await hre.ethers.getSigners();
+            const relayer = allSigners[1];
+            const user6 = allSigners[7];
+
             const amount = hre.ethers.parseEther("20");
-            
+
             // Lock
             await vaultToken.transfer(user6.address, amount);
             await vaultToken.connect(user6).approve(await bridgeLock.getAddress(), amount);
             await bridgeLock.connect(user6).lock(amount);
-            
+
             // Get current block
             const currentBlock = await hre.ethers.provider.getBlockNumber();
             console.log(`✓ Lock at block ${currentBlock}`);
 
             // In real scenario, relayer would wait for CONFIRMATION_DEPTH blocks
             // For test purposes, we'll just verify the event can be found in history
-            
+
             // Mine a few blocks to simulate confirmation
             for (let i = 0; i < 3; i++) {
                 await hre.ethers.provider.send("evm_mine", []);
@@ -207,7 +218,7 @@ describe("Recovery Tests: Relayer Crash & Recovery", function () {
             // Now relayer can safely process
             await bridgeMint.grantRole(await bridgeMint.RELAYER_ROLE(), relayer.address);
             await bridgeMint.connect(relayer).mintWrapped(user6.address, amount, 5);
-            
+
             expect(await wrappedToken.balanceOf(user6.address)).to.equal(amount);
             console.log("✓ Event processed after confirmation depth reached");
         });
