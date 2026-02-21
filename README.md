@@ -239,6 +239,4 @@ This is **expected** - replay protection is working!
 - [Hardhat Documentation](https://hardhat.org/)
 - [Ethers.js Documentation](https://docs.ethers.org/v6/)
 
-## License
 
-MIT
